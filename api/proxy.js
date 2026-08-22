@@ -12,10 +12,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt } = req.body;
+    let promptText = "";
 
-    if (!prompt) {
-      return res.status(400).json({ error: 'Nedostaje prompt u tijelu zahtjeva' });
+    // Provjeri da li je poslato kao JSON ili kao običan tekst
+    if (typeof req.body === 'string') {
+      try {
+        const parsed = JSON.parse(req.body);
+        promptText = parsed.prompt || req.body;
+      } catch (e) {
+        promptText = req.body;
+      }
+    } else if (req.body && req.body.prompt) {
+      promptText = req.body.prompt;
+    } else {
+      promptText = JSON.stringify(req.body);
     }
 
     const supabaseResponse = await fetch('https://lvvidixbdtdjfwxxxqzr.supabase.co/functions/v1/MPOBILLNI_ASISTNET', {
@@ -24,7 +34,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer sb_publishable_DMELD0DRGcKD9u12lowjgw_sPBaLqhT'
       },
-      body: JSON.stringify({ prompt })
+      body: JSON.stringify({ prompt: promptText })
     });
 
     const data = await supabaseResponse.json();
